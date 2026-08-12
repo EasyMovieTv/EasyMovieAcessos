@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easy Movies - Acesso ao Conteúdo</title>
+    <link rel="icon" href="favicon.png" type="image/png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #050505;
+            background: linear-gradient(135deg, #050505 0%, #1a0000 50%, #050505 100%);
+            background-size: 400% 400%;
+            animation: gradientLoop 10s ease infinite;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        @keyframes gradientLoop {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* TELA DE INTRODUÇÃO COM O SCANNER E ESTILO VERDE */
+        #introScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            background-image: 
+                linear-gradient(rgba(0, 255, 100, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 100, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            transition: opacity 1s ease;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* EFEITO DE SCANNER (Linha subindo e descendo) */
+        .scanner-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: rgba(0, 255, 100, 0.25);
+            box-shadow: 0 0 10px rgba(0, 255, 100, 0.4);
+            z-index: 10;
+            animation: scan 4s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes scan {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+
+        .intro-title {
+            font-size: 38px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            font-family: 'Arial Black', Gadget, sans-serif;
+            margin-bottom: 15px;
+            text-shadow: 0 0 20px rgba(255, 51, 51, 0.8);
+            animation: pulseText 2s infinite alternate;
+            z-index: 11;
+        }
+
+        @keyframes pulseText {
+            from { transform: scale(1); opacity: 0.8; }
+            to { transform: scale(1.05); opacity: 1; }
+        }
+
+        .intro-sub {
+            color: #00ff64;
+            font-size: 14px;
+            margin-bottom: 35px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-family: monospace;
+            z-index: 11;
+            opacity: 0.9;
+        }
+
+        /* BOTÃO ESTILO NETFLIX */
+        .btn-netflix {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            max-width: 260px;
+            padding: 16px 24px;
+            background-color: #E50914;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 14px rgba(229, 9, 20, 0.4);
+            outline: none;
+            z-index: 11;
+        }
+
+        .btn-netflix:hover {
+            background-color: #f40612;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(229, 9, 20, 0.6);
+        }
+
+        .btn-netflix:active {
+            transform: translateY(0);
+        }
+
+        /* CONTAINER PRINCIPAL DO SISTEMA */
+        .container {
+            background: rgba(15, 15, 15, 0.85);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(255, 0, 0, 0.2);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            display: none; 
+            animation: fadeInApp 1s ease;
+        }
+
+        @keyframes fadeInApp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo-container {
+            margin-bottom: 30px;
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-family: 'Arial Black', Gadget, sans-serif;
+            text-shadow: 0 0 10px rgba(255, 51, 51, 0.8);
+        }
+
+        .logo-easy {
+            color: #ffffff;
+        }
+
+        .logo-movie {
+            color: #ff3333;
+        }
+
+        h2 {
+            margin-bottom: 24px;
+            font-size: 20px;
+            color: #ff3333;
+            letter-spacing: 1px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #ccc;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            border-color: #ff3333;
+            outline: none;
+            box-shadow: 0 0 8px rgba(255, 51, 51, 0.4);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #cc0000;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+        }
+
+        button:hover {
+            background: #ff1a1a;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .error-msg {
+            color: #ff4d4d;
+            margin-top: 15px;
+            font-size: 14px;
+            display: none;
+        }
+
+        /* DISPLAY DE ETAPAS DE CARREGAMENTO */
+        .loading-steps {
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 13px;
+            color: #ffcc00;
+            display: none;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        .selection-screen {
+            display: none;
+            text-align: center;
+        }
+
+        .selection-screen h3 {
+            margin-bottom: 20px;
+            color: #fff;
+            font-size: 20px;
+        }
+
+        .btn-plan {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 12px;
+            background: #1a1a1a;
+            border: 1px solid #ff3333;
+            color: white;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-plan:hover {
+            background: #ff3333;
+            color: white;
+        }
+
+        .btn-logout {
+            background: transparent !important;
+            border: 1px solid #444 !important;
+            color: #aaa !important;
+            margin-top: 15px;
+            padding: 10px !important;
+            font-size: 14px !important;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255, 255, 255, 0.05) !important;
+            color: #fff !important;
+            border-color: #666 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="audioVinheta" src="vinheta.mp3" preload="auto"></audio>
+
+    <!-- TELA DA VINHETA DE ENTRADA COM O SCANNER -->
+    <div id="introScreen">
+        <div class="scanner-bar"></div>
+
+        <div class="intro-title">
+            <span style="color:#fff;">EASY</span><span style="color:#ff3333;">MOVIES</span>
+        </div>
+        <p class="intro-sub">[ AUTENTICANDO CONEXÃO ]</p>
+        
+        <div style="display: flex; justify-content: center; width: 100%;">
+            <button class="btn-netflix" onclick="iniciarExperiencia()">
+                <span>▶</span> ACESSAR PLATAFORMA
+            </button>
+        </div>
+    </div>
+
+    <!-- SISTEMA PRINCIPAL -->
+    <div class="container" id="mainContainer">
+        <!-- TELA DE LOGIN -->
+        <div id="loginSection">
+            <div class="logo-container">
+                <span class="logo-easy">EASY</span><span class="logo-movie">MOVIE</span>
+            </div>
+            
+            <h2>ÁREA DE ACESSO</h2>
+            
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <label>E-mail de Acesso</label>
+                    <input type="text" id="email" required placeholder="seu@email.com">
+                </div>
+                <div class="input-group">
+                    <label>Senha</label>
+                    <input type="password" id="password" required placeholder="Sua senha">
+                </div>
+                <button type="submit" id="submitBtn">Entrar</button>
+                <div id="errorMsg" class="error-msg">E-mail ou senha incorretos.</div>
+                <div id="loadingSteps" class="loading-steps">[ Verificando credenciais... ]</div>
+            </form>
+        </div>
+
+        <!-- TELA DE ESCOLHA -->
+        <div id="selectionSection" class="selection-screen">
+             <div class="logo-container">
+                <span class="logo-easy">EASY</span><span class="logo-movie">MOVIE</span>
+            </div>
+            <h3>Selecione a sua rede de acesso:</h3>
+            <a href="#" id="linkRede1" class="btn-plan" target="_blank">Rede 1 </a>
+            <a href="#" id="linkRede2" class="btn-plan" target="_blank">Rede 2</a>
+            <button class="btn-plan btn-logout" onclick="fazerLogout()">Sair da Conta</button>
+        </div>
+    </div>
+
+    <script>
+        function iniciarExperiencia() {
+            const audio = document.getElementById('audioVinheta');
+            audio.play().catch(error => {
+                console.log("Áudio bloqueado:", error);
+            });
+
+            const intro = document.getElementById('introScreen');
+            intro.style.opacity = '0';
+            
+            setTimeout(() => {
+                intro.style.display = 'none';
+                document.getElementById('mainContainer').style.display = 'block';
+            }, 800);
+        }
+
+        const LINKS_REDES = {
+            "rede1": "https://www3.redecanais.vip/",
+            "rede2": "https://pobreflixtv.baby/filmes/"
+        };
+
+        const usuariosAutorizados = {
+            "suporte.easymovies.filmes@gmail.com": {
+                senha: "M0v13s_2026#Ez",
+                redes: ["rede2"]
+            },
+            "contato.vip.easymovies@outlook.com": {
+                senha: "Pr3m1um_Net*2026$",
+                redes: ["rede1", "rede2"]
+            }
+        };
+
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const emailInput = document.getElementById('email').value.trim().toLowerCase();
+            const senhaInput = document.getElementById('password').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+            const submitBtn = document.getElementById('submitBtn');
+            const loadingSteps = document.getElementById('loadingSteps');
+
+            if (usuariosAutorizados[emailInput] && usuariosAutorizados[emailInput].senha === senhaInput) {
+                errorMsg.style.display = 'none';
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.5';
+                loadingSteps.style.display = 'block';
+                loadingSteps.style.color = '#ffcc00';
+
+                // ETAPA 1 (0s)
+                loadingSteps.innerText = '[ Verificando credenciais... ]';
+
+                setTimeout(() => {
+                    // ETAPA 2 (2.2s)
+                    loadingSteps.innerText = '[ Autenticando permissões de usuário... ]';
+                }, 2200);
+
+                setTimeout(() => {
+                    // ETAPA 3 (4.8s) - O spoilerzinho
+                    loadingSteps.innerText = '[ Carregando servidores de streaming... ]';
+                }, 4800);
+
+                setTimeout(() => {
+                    // ETAPA 4 (7.5s)
+                    loadingSteps.innerText = '[ Estabelecendo conexão criptografada... ]';
+                }, 7500);
+
+                setTimeout(() => {
+                    // ETAPA 5 (10s) - FINAL VERDE
+                    loadingSteps.innerText = '[ ACESSO LIBERADO ]';
+                    loadingSteps.style.color = '#00ff64';
+                }, 10000);
+
+                setTimeout(() => {
+                    const dadosUsuario = usuariosAutorizados[emailInput];
+
+                    document.getElementById('loginSection').style.display = 'none';
+                    loadingSteps.style.display = 'none';
+                    
+                    const btnRede1 = document.getElementById('linkRede1');
+                    const btnRede2 = document.getElementById('linkRede2');
+
+                    if (dadosUsuario.redes.includes("rede1")) {
+                        btnRede1.style.display = "block";
+                        btnRede1.href = LINKS_REDES["rede1"];
+                    } else {
+                        btnRede1.style.display = "none";
+                    }
+
+                    if (dadosUsuario.redes.includes("rede2")) {
+                        btnRede2.style.display = "block";
+                        btnRede2.href = LINKS_REDES["rede2"];
+                    } else {
+                        btnRede2.style.display = "none";
+                    }
+
+                    document.getElementById('selectionSection').style.display = 'block';
+
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                }, 11000);
+
+            } else {
+                errorMsg.style.display = 'block';
+                loadingSteps.style.display = 'none';
+            }
+        }
+
+        function fazerLogout() {
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('loadingSteps').style.display = 'none';
+            document.getElementById('errorMsg').style.display = 'none';
+            document.getElementById('selectionSection').style.display = 'none';
+            document.getElementById('loginSection').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
