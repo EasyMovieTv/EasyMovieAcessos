@@ -265,6 +265,20 @@
             color: white;
         }
 
+        .btn-sales {
+            background: #00ff64 !important;
+            border-color: #00ff64 !important;
+            color: #000 !important;
+            margin-top: 15px;
+            display: none;
+            text-transform: uppercase;
+        }
+
+        .btn-sales:hover {
+            background: #00cc52 !important;
+            color: #000 !important;
+        }
+
         .btn-logout {
             background: transparent !important;
             border: 1px solid #444 !important;
@@ -318,6 +332,7 @@
                 </div>
                 <button type="submit" id="submitBtn">Entrar</button>
                 <div id="errorMsg" class="error-msg">E-mail ou senha incorretos.</div>
+                <a href="https://easymovietv.github.io/easymovies/" id="salesBtn" class="btn-plan btn-sales" target="_blank">Garanta seu Acesso</a>
                 <div id="loadingSteps" class="loading-steps">[ Estabelecendo conexão segura... ]</div>
             </form>
         </div>
@@ -327,17 +342,17 @@
                 <span class="logo-easy">EASY</span><span class="logo-movie">MOVIE</span>
             </div>
             <h3>Selecione a sua rede de acesso:</h3>
-            <a href="#" id="linkRede1" class="btn-plan" target="_blank">Rede 1 </a>
-            <a href="#" id="linkRede2" class="btn-plan" target="_blank">Rede 2</a>
+            <a href="#" id="linkRede1" class="btn-plan" target="_blank" style="display: none;">Rede 1</a>
+            <a href="#" id="linkRede2" class="btn-plan" target="_blank" style="display: none;">Rede 2</a>
             <button class="btn-plan btn-logout" onclick="fazerLogout()">Sair da Conta</button>
         </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script>
-        // --- BLOQUEIOS DE SEGURANÇA ---
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
         });
@@ -354,7 +369,6 @@
             }
         });
 
-        // --- CONFIGURAÇÃO DO FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyDFyac7Za3KI0T6CD6NS_Ak2StTMJbCzf0",
             authDomain: "easymovie-e0bea.firebaseapp.com",
@@ -366,6 +380,9 @@
 
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let heartbeatInterval = null;
 
         function iniciarExperiencia() {
             const audio = document.getElementById('audioVinheta');
@@ -383,8 +400,8 @@
         }
 
         const LINKS_REDES = {
-            "rede1": "https://www3.redecanais.vip/",
-            "rede2": "https://pobreflixtv.baby/filmes/"
+            "rede1": "redes1.html",
+            "rede2": "redes2.html"
         };
 
         function handleLogin(event) {
@@ -395,14 +412,15 @@
             const errorMsg = document.getElementById('errorMsg');
             const submitBtn = document.getElementById('submitBtn');
             const loadingSteps = document.getElementById('loadingSteps');
+            const salesBtn = document.getElementById('salesBtn');
 
             errorMsg.style.display = 'none';
+            salesBtn.style.display = 'none';
             submitBtn.disabled = true;
             submitBtn.style.opacity = '0.5';
             loadingSteps.style.display = 'block';
             loadingSteps.style.color = '#ffcc00';
 
-            // Sequência exata de 15 segundos dividida em etapas profissionais
             loadingSteps.innerText = '[ Estabelecendo conexão segura... ]';
             
             setTimeout(() => { loadingSteps.innerText = '[ Autenticando servidor de dados... ]'; }, 3000);
@@ -416,29 +434,79 @@
 
             auth.signInWithEmailAndPassword(emailInput, senhaInput)
                 .then((userCredential) => {
-                    setTimeout(() => {
-                        document.getElementById('loginSection').style.display = 'none';
-                        loadingSteps.style.display = 'none';
-                        
-                        const btnRede1 = document.getElementById('linkRede1');
-                        const btnRede2 = document.getElementById('linkRede2');
+                    const userId = userCredential.user.uid;
+                    const sessionRef = db.collection("sessoes_ativas").doc(userId);
+                    const userDocRef = db.collection("usuarios").doc(userId);
 
-                        btnRede1.style.display = "block";
-                        btnRede1.href = LINKS_REDES["rede1"];
-                        
-                        btnRede2.style.display = "block";
-                        btnRede2.href = LINKS_REDES["rede2"];
+                    sessionRef.get().then((doc) => {
+                        const agora = Date.now();
+                        if (doc.exists && (agora - doc.data().timestamp < 45000)) {
+                            auth.signOut();
+                            setTimeout(() => {
+                                errorMsg.innerText = "Esta conta já está em uso em outro aparelho!";
+                                errorMsg.style.display = 'block';
+                                salesBtn.style.display = 'block';
+                                loadingSteps.style.display = 'none';
+                                submitBtn.disabled = false;
+                                submitBtn.style.opacity = '1';
+                            }, 15000);
+                        } else {
+                            sessionRef.set({ timestamp: agora });
+                            
+                            heartbeatInterval = setInterval(() => {
+                                sessionRef.set({ timestamp: Date.now() });
+                            }, 30000);
 
-                        document.getElementById('selectionSection').style.display = 'block';
+                            userDocRef.get().then((userDoc) => {
+                                let planoCliente = "completo"; 
+                                if (userDoc.exists && userDoc.data().plano) {
+                                    planoCliente = userDoc.data().plano; 
+                                }
 
-                        submitBtn.disabled = false;
-                        submitBtn.style.opacity = '1';
-                    }, 15000);
+                                setTimeout(() => {
+                                    document.getElementById('loginSection').style.display = 'none';
+                                    loadingSteps.style.display = 'none';
+                                    
+                                    const btnRede1 = document.getElementById('linkRede1');
+                                    const btnRede2 = document.getElementById('linkRede2');
+
+                                    if (planoCliente === "basico") {
+                                        btnRede1.style.display = "none";
+                                        btnRede2.style.display = "block";
+                                        btnRede2.href = LINKS_REDES["rede2"];
+                                    } else {
+                                        btnRede1.style.display = "block";
+                                        btnRede1.href = LINKS_REDES["rede1"];
+                                        btnRede2.style.display = "block";
+                                        btnRede2.href = LINKS_REDES["rede2"];
+                                    }
+
+                                    document.getElementById('selectionSection').style.display = 'block';
+
+                                    submitBtn.disabled = false;
+                                    submitBtn.style.opacity = '1';
+                                }, 15000);
+                            }).catch(() => {
+                                setTimeout(() => {
+                                    document.getElementById('loginSection').style.display = 'none';
+                                    loadingSteps.style.display = 'none';
+                                    document.getElementById('linkRede1').style.display = "block";
+                                    document.getElementById('linkRede1').href = LINKS_REDES["rede1"];
+                                    document.getElementById('linkRede2').style.display = "block";
+                                    document.getElementById('linkRede2').href = LINKS_REDES["rede2"];
+                                    document.getElementById('selectionSection').style.display = 'block';
+                                    submitBtn.disabled = false;
+                                    submitBtn.style.opacity = '1';
+                                }, 15000);
+                            });
+                        }
+                    });
                 })
                 .catch((error) => {
                     setTimeout(() => {
                         errorMsg.innerText = "E-mail ou senha incorretos.";
                         errorMsg.style.display = 'block';
+                        salesBtn.style.display = 'none';
                         loadingSteps.style.display = 'none';
                         submitBtn.disabled = false;
                         submitBtn.style.opacity = '1';
@@ -447,31 +515,32 @@
         }
 
         function fazerLogout() {
-            auth.signOut().then(() => {
-                document.getElementById('email').value = '';
-                document.getElementById('password').value = '';
-                document.getElementById('loadingSteps').style.display = 'none';
-                document.getElementById('errorMsg').style.display = 'none';
-                document.getElementById('selectionSection').style.display = 'none';
-                document.getElementById('loginSection').style.display = 'block';
-            });
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            const user = auth.currentUser;
+            if (user) {
+                db.collection("sessoes_ativas").doc(user.uid).delete().then(() => {
+                    auth.signOut().then(() => {
+                        location.reload();
+                    });
+                });
+            } else {
+                auth.signOut().then(() => { location.reload(); });
+            }
         }
 
-        // --- CONTROLE DE INATIVIDADE E SEGUNDO PLANO (10 MINUTOS) ---
         let inactivityTimer = null;
         const TEMPO_LIMITE = 10 * 60 * 1000;
 
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 inactivityTimer = setTimeout(() => {
+                    if (heartbeatInterval) clearInterval(heartbeatInterval);
+                    const user = auth.currentUser;
+                    if (user) {
+                        db.collection("sessoes_ativas").doc(user.uid).delete();
+                    }
                     auth.signOut().then(() => {
-                        document.getElementById('selectionSection').style.display = 'none';
-                        document.getElementById('loginSection').style.display = 'block';
-                        
-                        document.getElementById('email').value = '';
-                        document.getElementById('password').value = '';
-                        document.getElementById('loadingSteps').style.display = 'none';
-
+                        location.reload();
                         const errorMsg = document.getElementById('errorMsg');
                         errorMsg.innerText = "Você foi deslogado por inatividade, logue novamente quando for assistir.";
                         errorMsg.style.display = 'block';
