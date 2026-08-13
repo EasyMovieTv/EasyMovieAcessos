@@ -318,7 +318,7 @@
                 </div>
                 <button type="submit" id="submitBtn">Entrar</button>
                 <div id="errorMsg" class="error-msg">E-mail ou senha incorretos.</div>
-                <div id="loadingSteps" class="loading-steps">[ Conectando ao servidor seguro... ]</div>
+                <div id="loadingSteps" class="loading-steps">[ Estabelecendo conexão segura... ]</div>
             </form>
         </div>
 
@@ -333,12 +333,11 @@
         </div>
     </div>
 
-    <!-- Bibliotecas do Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
     <script>
-        // --- BLOQUEIOS DE SEGURANÇA (INSPECIONAR / BOTÃO DIREITO) ---
+        // --- BLOQUEIOS DE SEGURANÇA ---
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
         });
@@ -403,24 +402,20 @@
             loadingSteps.style.display = 'block';
             loadingSteps.style.color = '#ffcc00';
 
-            // Sequência de etapas de carregamento personalizadas
-            loadingSteps.innerText = '[ Conectando ao servidor seguro... ]';
-
-            setTimeout(() => {
-                loadingSteps.innerText = '[ Verificando credenciais no sistema... ]';
-            }, 600);
-
-            setTimeout(() => {
-                loadingSteps.innerText = '[ Validando permissões de acesso... ]';
-            }, 1200);
+            // Sequência exata de 15 segundos dividida em etapas profissionais
+            loadingSteps.innerText = '[ Estabelecendo conexão segura... ]';
+            
+            setTimeout(() => { loadingSteps.innerText = '[ Autenticando servidor de dados... ]'; }, 3000);
+            setTimeout(() => { loadingSteps.innerText = '[ Verificando credenciais no sistema... ]'; }, 6000);
+            setTimeout(() => { loadingSteps.innerText = '[ Consultando base de assinantes... ]'; }, 9000);
+            setTimeout(() => { loadingSteps.innerText = '[ Processando permissões de rede... ]'; }, 12000);
+            setTimeout(() => { 
+                loadingSteps.innerText = '[ ACESSO LIBERADO ]'; 
+                loadingSteps.style.color = '#00ff64'; 
+            }, 14000);
 
             auth.signInWithEmailAndPassword(emailInput, senhaInput)
                 .then((userCredential) => {
-                    setTimeout(() => {
-                        loadingSteps.innerText = '[ ACESSO LIBERADO ]';
-                        loadingSteps.style.color = '#00ff64';
-                    }, 1800);
-
                     setTimeout(() => {
                         document.getElementById('loginSection').style.display = 'none';
                         loadingSteps.style.display = 'none';
@@ -438,7 +433,7 @@
 
                         submitBtn.disabled = false;
                         submitBtn.style.opacity = '1';
-                    }, 2500);
+                    }, 15000);
                 })
                 .catch((error) => {
                     setTimeout(() => {
@@ -447,7 +442,7 @@
                         loadingSteps.style.display = 'none';
                         submitBtn.disabled = false;
                         submitBtn.style.opacity = '1';
-                    }, 1800);
+                    }, 15000);
                 });
         }
 
