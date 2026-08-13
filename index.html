@@ -404,115 +404,114 @@
             "rede2": "redes2.html"
         };
 
-        function handleLogin(event) {
-            event.preventDefault();
-            
-            const emailInput = document.getElementById('email').value.trim();
-            const senhaInput = document.getElementById('password').value.trim();
-            const errorMsg = document.getElementById('errorMsg');
-            const submitBtn = document.getElementById('submitBtn');
-            const loadingSteps = document.getElementById('loadingSteps');
-            const salesBtn = document.getElementById('salesBtn');
+        async function handleLogin(event) {
+    event.preventDefault();
 
-            errorMsg.style.display = 'none';
-            salesBtn.style.display = 'none';
-            submitBtn.disabled = true;
-            submitBtn.style.opacity = '0.5';
-            loadingSteps.style.display = 'block';
-            loadingSteps.style.color = '#ffcc00';
+    // Pega os valores dos inputs (certifique-se que seus inputs de email e senha têm os IDs 'email' e 'senha')
+    const email = document.getElementById('email').value.trim();
+    const senha = document.getElementById('senha').value.trim();
+    
+    const submitBtn = document.getElementById('submitBtn');
+    const errorMsg = document.getElementById('errorMsg');
+    const loadingSteps = document.getElementById('loadingSteps');
 
-            loadingSteps.innerText = '[ Estabelecendo conexão segura... ]';
-            
-            setTimeout(() => { loadingSteps.innerText = '[ Autenticando servidor de dados... ]'; }, 3000);
-            setTimeout(() => { loadingSteps.innerText = '[ Verificando credenciais no sistema... ]'; }, 6000);
-            setTimeout(() => { loadingSteps.innerText = '[ Consultando base de assinantes... ]'; }, 9000);
-            setTimeout(() => { loadingSteps.innerText = '[ Processando permissões de rede... ]'; }, 12000);
-            setTimeout(() => { 
-                loadingSteps.innerText = '[ ACESSO LIBERADO ]'; 
-                loadingSteps.style.color = '#00ff64'; 
-            }, 14000);
+    // Prepara a tela para o carregamento
+    submitBtn.disabled = true;
+    submitBtn.style.opacity = '0.5';
+    errorMsg.style.display = 'none';
+    loadingSteps.style.display = 'block';
+    loadingSteps.style.color = '#ffffff';
 
-            auth.signInWithEmailAndPassword(emailInput, senhaInput)
-                .then((userCredential) => {
-                    const userId = userCredential.user.uid;
-                    const sessionRef = db.collection("sessoes_ativas").doc(userId);
-                    const userDocRef = db.collection("usuarios").doc(userId);
+    let autenticadoComSucesso = false;
+    let usuarioUid = "";
 
-                    sessionRef.get().then((doc) => {
-                        const agora = Date.now();
-                        if (doc.exists && (agora - doc.data().timestamp < 45000)) {
-                            auth.signOut();
-                            setTimeout(() => {
-                                errorMsg.innerText = "Esta conta já está em uso em outro aparelho!";
-                                errorMsg.style.display = 'block';
-                                salesBtn.style.display = 'block';
-                                loadingSteps.style.display = 'none';
-                                submitBtn.disabled = false;
-                                submitBtn.style.opacity = '1';
-                            }, 15000);
-                        } else {
-                            sessionRef.set({ timestamp: agora });
-                            
-                            heartbeatInterval = setInterval(() => {
-                                sessionRef.set({ timestamp: Date.now() });
-                            }, 30000);
+    // 1. Tenta autenticar em segundo plano enquanto o show de 15 segundos roda
+    try {
+        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, senha);
+        usuarioUid = userCredential.user.uid;
+        autenticadoComSucesso = true;
+    } catch (error) {
+        autenticadoComSucesso = false;
+    }
 
-                            userDocRef.get().then((userDoc) => {
-                                let planoCliente = "completo"; 
-                                if (userDoc.exists && userDoc.data().plano) {
-                                    planoCliente = userDoc.data().plano; 
-                                }
+    // 2. O show de 15 segundos de segurança (mensagens alternadas)
+    const mensagens = [
+        "[ Estabelecendo conexão segura... ]",
+        "[ Verificando integridade da sessão... ]",
+        "[ Analisando barreiras anti-fraude... ]",
+        "[ Consultando banco de dados criptografado... ]",
+        "[ Validando credenciais de acesso... ]"
+    ];
 
-                                setTimeout(() => {
-                                    document.getElementById('loginSection').style.display = 'none';
-                                    loadingSteps.style.display = 'none';
-                                    
-                                    const btnRede1 = document.getElementById('linkRede1');
-                                    const btnRede2 = document.getElementById('linkRede2');
+    for (let i = 0; i < mensagens.length; i++) {
+        loadingSteps.innerHTML = mensagens[i];
+        await new Promise(resolve => setTimeout(resolve, 3000)); // 3 segundos por mensagem = 15s total
+    }
 
-                                    if (planoCliente === "basico") {
-                                        btnRede1.style.display = "none";
-                                        btnRede2.style.display = "block";
-                                        btnRede2.href = LINKS_REDES["rede2"];
-                                    } else {
-                                        btnRede1.style.display = "block";
-                                        btnRede1.href = LINKS_REDES["rede1"];
-                                        btnRede2.style.display = "block";
-                                        btnRede2.href = LINKS_REDES["rede2"];
-                                    }
+    // 3. Verificação após os 15 segundos
+    if (!autenticadoComSucesso) {
+        // Se errou a senha ou e-mail, esconde o carregamento e mostra o erro em VERMELHO
+        loadingSteps.style.display = 'none';
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
 
-                                    document.getElementById('selectionSection').style.display = 'block';
+        errorMsg.style.display = 'block';
+        errorMsg.style.color = '#ff3333'; // Vermelho forte
+        errorMsg.innerText = "❌ ACESSO NEGADO: E-mail ou senha incorretos.";
+        return;
+    }
 
-                                    submitBtn.disabled = false;
-                                    submitBtn.style.opacity = '1';
-                                }, 15000);
-                            }).catch(() => {
-                                setTimeout(() => {
-                                    document.getElementById('loginSection').style.display = 'none';
-                                    loadingSteps.style.display = 'none';
-                                    document.getElementById('linkRede1').style.display = "block";
-                                    document.getElementById('linkRede1').href = LINKS_REDES["rede1"];
-                                    document.getElementById('linkRede2').style.display = "block";
-                                    document.getElementById('linkRede2').href = LINKS_REDES["rede2"];
-                                    document.getElementById('selectionSection').style.display = 'block';
-                                    submitBtn.disabled = false;
-                                    submitBtn.style.opacity = '1';
-                                }, 15000);
-                            });
-                        }
-                    });
-                })
-                .catch((error) => {
-                    setTimeout(() => {
-                        errorMsg.innerText = "E-mail ou senha incorretos.";
-                        errorMsg.style.display = 'block';
-                        salesBtn.style.display = 'none';
-                        loadingSteps.style.display = 'none';
-                        submitBtn.disabled = false;
-                        submitBtn.style.opacity = '1';
-                    }, 15000);
-                });
+    // 4. Se passou, checa o plano no Firestore de forma rigorosa (à prova de falhas de navegador)
+    try {
+        loadingSteps.innerHTML = "[ Carregando painel do usuário... ]";
+        const docRef = await db.collection("usuarios").doc(usuarioUid).get();
+
+        if (docRef.exists) {
+            const dados = docRef.data();
+            // Leitura estrita: limpa espaços e letras maiúsculas/minúsculas
+            const planoUsuario = dados.plano ? dados.plano.trim().toLowerCase() : "basico";
+
+            loadingSteps.style.color = "#00ff64"; // Verde sucesso
+            loadingSteps.innerHTML = "[ ✔ ACESSO LIBERADO! ]";
+
+            setTimeout(() => {
+                // Aqui você mantém a lógica que já usa para exibir a tela de seleção/redes do seu sistema
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('selectionSection').style.display = 'block';
+                
+                // Libera os botões conforme o plano exato
+                const linkRede1 = document.getElementById('linkRede1');
+                const linkRede2 = document.getElementById('linkRede2');
+
+                if (planoUsuario === 'completo') {
+                    if (linkRede1) linkRede1.style.display = 'block';
+                    if (linkRede2) linkRede2.style.display = 'block';
+                } else {
+                    if (linkRede1) linkRede1.style.display = 'none';
+                    if (linkRede2) linkRede2.style.display = 'block';
+                }
+            }, 1000);
+
+        } else {
+            loadingSteps.style.display = 'none';
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+
+            errorMsg.style.display = 'block';
+            errorMsg.style.color = '#ff3333';
+            errorMsg.innerText = "❌ ERRO: Usuário sem plano cadastrado.";
         }
+
+    } catch (e) {
+        loadingSteps.style.display = 'none';
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+
+        errorMsg.style.display = 'block';
+        errorMsg.style.color = '#ff3333';
+        errorMsg.innerText = "❌ Erro de comunicação com o banco de dados.";
+    }
+}
 
         function fazerLogout() {
             if (heartbeatInterval) clearInterval(heartbeatInterval);
