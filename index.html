@@ -318,7 +318,7 @@
                 </div>
                 <button type="submit" id="submitBtn">Entrar</button>
                 <div id="errorMsg" class="error-msg">E-mail ou senha incorretos.</div>
-                <div id="loadingSteps" class="loading-steps">[ Verificando credenciais... ]</div>
+                <div id="loadingSteps" class="loading-steps">[ Conectando ao servidor seguro... ]</div>
             </form>
         </div>
 
@@ -339,13 +339,10 @@
 
     <script>
         // --- BLOQUEIOS DE SEGURANÇA (INSPECIONAR / BOTÃO DIREITO) ---
-        
-        // 1. Bloqueia o botão direito do mouse
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
         });
 
-        // 2. Bloqueia atalhos de teclado de inspeção (F12, Ctrl+Shift+I/J/C, Ctrl+U)
         document.addEventListener('keydown', function(e) {
             if (e.key === 'F12') {
                 e.preventDefault();
@@ -406,14 +403,23 @@
             loadingSteps.style.display = 'block';
             loadingSteps.style.color = '#ffcc00';
 
-            loadingSteps.innerText = '[ Verificando credenciais no Firebase... ]';
+            // Sequência de etapas de carregamento personalizadas
+            loadingSteps.innerText = '[ Conectando ao servidor seguro... ]';
+
+            setTimeout(() => {
+                loadingSteps.innerText = '[ Verificando credenciais no sistema... ]';
+            }, 600);
+
+            setTimeout(() => {
+                loadingSteps.innerText = '[ Validando permissões de acesso... ]';
+            }, 1200);
 
             auth.signInWithEmailAndPassword(emailInput, senhaInput)
                 .then((userCredential) => {
                     setTimeout(() => {
                         loadingSteps.innerText = '[ ACESSO LIBERADO ]';
                         loadingSteps.style.color = '#00ff64';
-                    }, 800);
+                    }, 1800);
 
                     setTimeout(() => {
                         document.getElementById('loginSection').style.display = 'none';
@@ -432,14 +438,16 @@
 
                         submitBtn.disabled = false;
                         submitBtn.style.opacity = '1';
-                    }, 1600);
+                    }, 2500);
                 })
                 .catch((error) => {
-                    errorMsg.innerText = "E-mail ou senha incorretos.";
-                    errorMsg.style.display = 'block';
-                    loadingSteps.style.display = 'none';
-                    submitBtn.disabled = false;
-                    submitBtn.style.opacity = '1';
+                    setTimeout(() => {
+                        errorMsg.innerText = "E-mail ou senha incorretos.";
+                        errorMsg.style.display = 'block';
+                        loadingSteps.style.display = 'none';
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                    }, 1800);
                 });
         }
 
@@ -456,7 +464,7 @@
 
         // --- CONTROLE DE INATIVIDADE E SEGUNDO PLANO (10 MINUTOS) ---
         let inactivityTimer = null;
-        const TEMPO_LIMITE = 10 * 60 * 1000; // 10 minutos em milissegundos
+        const TEMPO_LIMITE = 10 * 60 * 1000;
 
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
