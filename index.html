@@ -11,6 +11,10 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
 
         body {
@@ -32,7 +36,6 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* TELA DE INTRODUÇÃO COM O SCANNER E ESTILO VERDE */
         #introScreen {
             position: fixed;
             top: 0;
@@ -54,7 +57,6 @@
             padding: 20px;
         }
 
-        /* EFEITO DE SCANNER (Linha subindo e descendo) */
         .scanner-bar {
             position: absolute;
             top: 0;
@@ -102,7 +104,6 @@
             opacity: 0.9;
         }
 
-        /* BOTÃO ESTILO NETFLIX */
         .btn-netflix {
             display: inline-flex;
             align-items: center;
@@ -131,11 +132,6 @@
             box-shadow: 0 6px 20px rgba(229, 9, 20, 0.6);
         }
 
-        .btn-netflix:active {
-            transform: translateY(0);
-        }
-
-        /* CONTAINER PRINCIPAL DO SISTEMA */
         .container {
             background: rgba(15, 15, 15, 0.85);
             padding: 40px;
@@ -165,13 +161,8 @@
             text-shadow: 0 0 10px rgba(255, 51, 51, 0.8);
         }
 
-        .logo-easy {
-            color: #ffffff;
-        }
-
-        .logo-movie {
-            color: #ff3333;
-        }
+        .logo-easy { color: #ffffff; }
+        .logo-movie { color: #ff3333; }
 
         h2 {
             margin-bottom: 24px;
@@ -201,6 +192,8 @@
             color: #fff;
             font-size: 16px;
             transition: all 0.3s;
+            -webkit-user-select: text;
+            user-select: text;
         }
 
         input:focus {
@@ -222,13 +215,8 @@
             transition: background 0.3s, transform 0.1s;
         }
 
-        button:hover {
-            background: #ff1a1a;
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
+        button:hover { background: #ff1a1a; }
+        button:active { transform: scale(0.98); }
 
         .error-msg {
             color: #ff4d4d;
@@ -237,7 +225,6 @@
             display: none;
         }
 
-        /* DISPLAY DE ETAPAS DE CARREGAMENTO */
         .loading-steps {
             margin-top: 15px;
             font-family: monospace;
@@ -298,10 +285,8 @@
 
     <audio id="audioVinheta" src="vinheta.mp3" preload="auto"></audio>
 
-    <!-- TELA DA VINHETA DE ENTRADA COM O SCANNER -->
     <div id="introScreen">
         <div class="scanner-bar"></div>
-
         <div class="intro-title">
             <span style="color:#fff;">EASY</span><span style="color:#ff3333;">MOVIES</span>
         </div>
@@ -314,9 +299,7 @@
         </div>
     </div>
 
-    <!-- SISTEMA PRINCIPAL -->
     <div class="container" id="mainContainer">
-        <!-- TELA DE LOGIN -->
         <div id="loginSection">
             <div class="logo-container">
                 <span class="logo-easy">EASY</span><span class="logo-movie">MOVIE</span>
@@ -339,7 +322,6 @@
             </form>
         </div>
 
-        <!-- TELA DE ESCOLHA -->
         <div id="selectionSection" class="selection-screen">
              <div class="logo-container">
                 <span class="logo-easy">EASY</span><span class="logo-movie">MOVIE</span>
@@ -351,7 +333,44 @@
         </div>
     </div>
 
+    <!-- Bibliotecas do Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
     <script>
+        // --- BLOQUEIOS DE SEGURANÇA (INSPECIONAR / BOTÃO DIREITO) ---
+        
+        // 1. Bloqueia o botão direito do mouse
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        // 2. Bloqueia atalhos de teclado de inspeção (F12, Ctrl+Shift+I/J/C, Ctrl+U)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12') {
+                e.preventDefault();
+            }
+            if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) {
+                e.preventDefault();
+            }
+            if (e.ctrlKey && (e.key === 'U' || e.key === 'u')) {
+                e.preventDefault();
+            }
+        });
+
+        // --- CONFIGURAÇÃO DO FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDFyac7Za3KI0T6CD6NS_Ak2StTMJbCzf0",
+            authDomain: "easymovie-e0bea.firebaseapp.com",
+            projectId: "easymovie-e0bea",
+            storageBucket: "easymovie-e0bea.firebasestorage.app",
+            messagingSenderId: "100437930301",
+            appId: "1:100437930301:web:f7e4eb48868795a07e5554"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
         function iniciarExperiencia() {
             const audio = document.getElementById('audioVinheta');
             audio.play().catch(error => {
@@ -372,100 +391,96 @@
             "rede2": "https://pobreflixtv.baby/filmes/"
         };
 
-        const usuariosAutorizados = {
-            "suporte.easymovies.filmes@gmail.com": {
-                senha: "M0v13s_2026#Ez",
-                redes: ["rede2"]
-            },
-            "contato.vip.easymovies@outlook.com": {
-                senha: "Pr3m1um_Net*2026$",
-                redes: ["rede1", "rede2"]
-            }
-        };
-
         function handleLogin(event) {
             event.preventDefault();
             
-            const emailInput = document.getElementById('email').value.trim().toLowerCase();
+            const emailInput = document.getElementById('email').value.trim();
             const senhaInput = document.getElementById('password').value.trim();
             const errorMsg = document.getElementById('errorMsg');
             const submitBtn = document.getElementById('submitBtn');
             const loadingSteps = document.getElementById('loadingSteps');
 
-            if (usuariosAutorizados[emailInput] && usuariosAutorizados[emailInput].senha === senhaInput) {
-                errorMsg.style.display = 'none';
-                submitBtn.disabled = true;
-                submitBtn.style.opacity = '0.5';
-                loadingSteps.style.display = 'block';
-                loadingSteps.style.color = '#ffcc00';
+            errorMsg.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.5';
+            loadingSteps.style.display = 'block';
+            loadingSteps.style.color = '#ffcc00';
 
-                // ETAPA 1 (0s)
-                loadingSteps.innerText = '[ Verificando credenciais... ]';
+            loadingSteps.innerText = '[ Verificando credenciais no Firebase... ]';
 
-                setTimeout(() => {
-                    // ETAPA 2 (2.2s)
-                    loadingSteps.innerText = '[ Autenticando permissões de usuário... ]';
-                }, 2200);
+            auth.signInWithEmailAndPassword(emailInput, senhaInput)
+                .then((userCredential) => {
+                    setTimeout(() => {
+                        loadingSteps.innerText = '[ ACESSO LIBERADO ]';
+                        loadingSteps.style.color = '#00ff64';
+                    }, 800);
 
-                setTimeout(() => {
-                    // ETAPA 3 (4.8s) - O spoilerzinho
-                    loadingSteps.innerText = '[ Carregando servidores de streaming... ]';
-                }, 4800);
+                    setTimeout(() => {
+                        document.getElementById('loginSection').style.display = 'none';
+                        loadingSteps.style.display = 'none';
+                        
+                        const btnRede1 = document.getElementById('linkRede1');
+                        const btnRede2 = document.getElementById('linkRede2');
 
-                setTimeout(() => {
-                    // ETAPA 4 (7.5s)
-                    loadingSteps.innerText = '[ Estabelecendo conexão criptografada... ]';
-                }, 7500);
-
-                setTimeout(() => {
-                    // ETAPA 5 (10s) - FINAL VERDE
-                    loadingSteps.innerText = '[ ACESSO LIBERADO ]';
-                    loadingSteps.style.color = '#00ff64';
-                }, 10000);
-
-                setTimeout(() => {
-                    const dadosUsuario = usuariosAutorizados[emailInput];
-
-                    document.getElementById('loginSection').style.display = 'none';
-                    loadingSteps.style.display = 'none';
-                    
-                    const btnRede1 = document.getElementById('linkRede1');
-                    const btnRede2 = document.getElementById('linkRede2');
-
-                    if (dadosUsuario.redes.includes("rede1")) {
                         btnRede1.style.display = "block";
                         btnRede1.href = LINKS_REDES["rede1"];
-                    } else {
-                        btnRede1.style.display = "none";
-                    }
-
-                    if (dadosUsuario.redes.includes("rede2")) {
+                        
                         btnRede2.style.display = "block";
                         btnRede2.href = LINKS_REDES["rede2"];
-                    } else {
-                        btnRede2.style.display = "none";
-                    }
 
-                    document.getElementById('selectionSection').style.display = 'block';
+                        document.getElementById('selectionSection').style.display = 'block';
 
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                    }, 1600);
+                })
+                .catch((error) => {
+                    errorMsg.innerText = "E-mail ou senha incorretos.";
+                    errorMsg.style.display = 'block';
+                    loadingSteps.style.display = 'none';
                     submitBtn.disabled = false;
                     submitBtn.style.opacity = '1';
-                }, 11000);
-
-            } else {
-                errorMsg.style.display = 'block';
-                loadingSteps.style.display = 'none';
-            }
+                });
         }
 
         function fazerLogout() {
-            document.getElementById('email').value = '';
-            document.getElementById('password').value = '';
-            document.getElementById('loadingSteps').style.display = 'none';
-            document.getElementById('errorMsg').style.display = 'none';
-            document.getElementById('selectionSection').style.display = 'none';
-            document.getElementById('loginSection').style.display = 'block';
+            auth.signOut().then(() => {
+                document.getElementById('email').value = '';
+                document.getElementById('password').value = '';
+                document.getElementById('loadingSteps').style.display = 'none';
+                document.getElementById('errorMsg').style.display = 'none';
+                document.getElementById('selectionSection').style.display = 'none';
+                document.getElementById('loginSection').style.display = 'block';
+            });
         }
+
+        // --- CONTROLE DE INATIVIDADE E SEGUNDO PLANO (10 MINUTOS) ---
+        let inactivityTimer = null;
+        const TEMPO_LIMITE = 10 * 60 * 1000; // 10 minutos em milissegundos
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                inactivityTimer = setTimeout(() => {
+                    auth.signOut().then(() => {
+                        document.getElementById('selectionSection').style.display = 'none';
+                        document.getElementById('loginSection').style.display = 'block';
+                        
+                        document.getElementById('email').value = '';
+                        document.getElementById('password').value = '';
+                        document.getElementById('loadingSteps').style.display = 'none';
+
+                        const errorMsg = document.getElementById('errorMsg');
+                        errorMsg.innerText = "Você foi deslogado por inatividade, logue novamente quando for assistir.";
+                        errorMsg.style.display = 'block';
+                    });
+                }, TEMPO_LIMITE);
+            } else {
+                if (inactivityTimer) {
+                    clearTimeout(inactivityTimer);
+                    inactivityTimer = null;
+                }
+            }
+        });
     </script>
 </body>
 </html>
