@@ -404,23 +404,23 @@
             "rede2": "redes2.html"
         };
 
-        async function handleLogin(event) {
+async function handleLogin(event) {
     event.preventDefault();
 
-    // Pega os valores dos inputs (certifique-se que seus inputs de email e senha têm os IDs 'email' e 'senha')
     const email = document.getElementById('email').value.trim();
-    const senha = document.getElementById('senha').value.trim();
+    const senha = document.getElementById('password').value.trim();
     
     const submitBtn = document.getElementById('submitBtn');
     const errorMsg = document.getElementById('errorMsg');
     const loadingSteps = document.getElementById('loadingSteps');
 
+    if (errorMsg) errorMsg.style.display = 'none';
+
     // Prepara a tela para o carregamento
     submitBtn.disabled = true;
     submitBtn.style.opacity = '0.5';
-    errorMsg.style.display = 'none';
     loadingSteps.style.display = 'block';
-    loadingSteps.style.color = '#ffffff';
+    loadingSteps.style.color = '#ffd700'; // AMARELO forte de carregamento
 
     let autenticadoComSucesso = false;
     let usuarioUid = "";
@@ -434,7 +434,7 @@
         autenticadoComSucesso = false;
     }
 
-    // 2. O show de 15 segundos de segurança (mensagens alternadas)
+    // 2. O show de 15 segundos de segurança em AMARELO
     const mensagens = [
         "[ Estabelecendo conexão segura... ]",
         "[ Verificando integridade da sessão... ]",
@@ -448,38 +448,32 @@
         await new Promise(resolve => setTimeout(resolve, 3000)); // 3 segundos por mensagem = 15s total
     }
 
-    // 3. Verificação após os 15 segundos
+    // 3. Se errou a senha: usa o mesmo layout do Acesso Liberado, mas em VERMELHO com colchetes
     if (!autenticadoComSucesso) {
-        // Se errou a senha ou e-mail, esconde o carregamento e mostra o erro em VERMELHO
-        loadingSteps.style.display = 'none';
         submitBtn.disabled = false;
         submitBtn.style.opacity = '1';
 
-        errorMsg.style.display = 'block';
-        errorMsg.style.color = '#ff3333'; // Vermelho forte
-        errorMsg.innerText = "❌ ACESSO NEGADO: E-mail ou senha incorretos.";
+        loadingSteps.style.color = '#ff3333'; // VERMELHO forte
+        loadingSteps.innerHTML = "[ ❌ ACESSO NEGADO ]"; // Formato idêntico ao liberado
         return;
     }
 
-    // 4. Se passou, checa o plano no Firestore de forma rigorosa (à prova de falhas de navegador)
+    // 4. Se passou, checa o plano no Firestore de forma rigorosa
     try {
         loadingSteps.innerHTML = "[ Carregando painel do usuário... ]";
         const docRef = await db.collection("usuarios").doc(usuarioUid).get();
 
         if (docRef.exists) {
             const dados = docRef.data();
-            // Leitura estrita: limpa espaços e letras maiúsculas/minúsculas
             const planoUsuario = dados.plano ? dados.plano.trim().toLowerCase() : "basico";
 
-            loadingSteps.style.color = "#00ff64"; // Verde sucesso
+            loadingSteps.style.color = "#00ff64"; // VERDE sucesso
             loadingSteps.innerHTML = "[ ✔ ACESSO LIBERADO! ]";
 
             setTimeout(() => {
-                // Aqui você mantém a lógica que já usa para exibir a tela de seleção/redes do seu sistema
                 document.getElementById('loginSection').style.display = 'none';
                 document.getElementById('selectionSection').style.display = 'block';
                 
-                // Libera os botões conforme o plano exato
                 const linkRede1 = document.getElementById('linkRede1');
                 const linkRede2 = document.getElementById('linkRede2');
 
@@ -493,23 +487,17 @@
             }, 1000);
 
         } else {
-            loadingSteps.style.display = 'none';
             submitBtn.disabled = false;
             submitBtn.style.opacity = '1';
-
-            errorMsg.style.display = 'block';
-            errorMsg.style.color = '#ff3333';
-            errorMsg.innerText = "❌ ERRO: Usuário sem plano cadastrado.";
+            loadingSteps.style.color = '#ff3333';
+            loadingSteps.innerHTML = "[ ❌ ERRO: Usuário sem plano ]";
         }
 
     } catch (e) {
-        loadingSteps.style.display = 'none';
         submitBtn.disabled = false;
         submitBtn.style.opacity = '1';
-
-        errorMsg.style.display = 'block';
-        errorMsg.style.color = '#ff3333';
-        errorMsg.innerText = "❌ Erro de comunicação com o banco de dados.";
+        loadingSteps.style.color = '#ff3333';
+        loadingSteps.innerHTML = "[ ❌ Erro de comunicação com o banco ]";
     }
 }
 
@@ -526,7 +514,7 @@
                 auth.signOut().then(() => { location.reload(); });
             }
         }
-
+D
         let inactivityTimer = null;
         const TEMPO_LIMITE = 10 * 60 * 1000;
 
