@@ -3,36 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Easy Movies - Transmissão Rede 1</title>
+    <title>Easy Movies - Acesso à Rede 1</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-        body, html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #000;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; }
+        body { background-color: #050505; background: linear-gradient(135deg, #050505 0%, #1a0000 50%, #050505 100%); height: 100vh; display: flex; justify-content: center; align-items: center; color: #ffffff; }
+        .box { background: rgba(15, 15, 15, 0.85); padding: 40px; border-radius: 12px; box-shadow: 0 8px 32px rgba(255, 0, 0, 0.2); border: 1px solid rgba(255, 0, 0, 0.3); width: 100%; max-width: 420px; text-align: center; backdrop-filter: blur(10px); }
+        .logo { font-size: 28px; font-weight: 900; margin-bottom: 25px; font-family: 'Arial Black', Gadget, sans-serif; }
+        h1 { font-size: 18px; color: #00ff64; margin-bottom: 15px; }
+        p { color: #aaa; font-size: 14px; margin-bottom: 25px; line-height: 1.5; }
+        .btn { display: block; width: 100%; padding: 14px; background: #E50914; color: white; border: none; border-radius: 6px; font-weight: bold; text-decoration: none; font-size: 16px; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 14px rgba(229, 9, 20, 0.4); }
+        .btn:hover { background: #f40612; transform: translateY(-2px); }
     </style>
 </head>
 <body>
-    <iframe src="https://www3.redecanais.vip/" style="position:fixed; top:0; left:0; bottom:0; right:0; width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;"></iframe>
-
-    <script>
-        document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key)) || (e.ctrlKey && ['U', 'u', 'S', 's'].includes(e.key))) {
-                e.preventDefault();
-                return false;
-            }
-        });
-    </script>
+    <div class="box">
+        <div class="logo">EASY<span style="color:#ff3333;">MOVIES</span></div>
+        <h1>✔ ACESSO AUTORIZADO</h1>
+        <p>Sua autenticação foi confirmada com segurança. Clique no botão abaixo para abrir a <strong>Rede 1</strong>.</p>
+        <a href="https://www3.redecanais.vip/" class="btn" target="_blank">ACESSAR REDE 1 AGORA</a>
+    </div>
 </body>
 </html>
